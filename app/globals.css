@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,900;1,500;1,600&family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+    .oxi-root {
+      --pitch: #0A0A0A;
+      --surface: #151310;
+      --surface-2: #1C1915;
+      --gold: #C9A227;
+      --gold-bright: #E0C158;
+      --cream: #F5F1E6;
+      --cream-dim: #A69F8E;
+      --line: rgba(201,162,39,0.28);
+      --line-soft: rgba(201,162,39,0.14);
+      background: var(--pitch);
+      color: var(--cream);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+    .f-display { font-family: 'Playfair Display', serif; }
+    .f-display-italic { font-family: 'Playfair Display', serif; font-style: italic; font-weight: 500; }
+    .f-label { font-family: 'Inter', sans-serif; letter-spacing: 0.16em; text-transform: uppercase; }
+
+    .oxi-root ::selection { background: var(--gold); color: var(--pitch); }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes cornerDraw {
+      from { opacity: 0; transform: scale(0.6); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes drawerIn {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .anim-word {
+      display: inline-block;
+      opacity: 0;
+      animation: fadeSlideUp 0.7s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    .anim-corner {
+      animation: cornerDraw 0.6s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    .card-reveal {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    .card-reveal.in {
+      animation: fadeSlideUp 0.6s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    .no-motion .anim-word, .no-motion .anim-corner, .no-motion .card-reveal {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    /* Signature double gold frame with corner ticks, echoing the IG template border */
+    .frame-outer {
+      position: relative;
+      border: 1px solid var(--line);
+      padding: 3px;
+    }
+    .frame-inner {
+      border: 1px solid var(--line-soft);
+      padding: 2.5rem 1.25rem;
+    }
+    .frame-corner {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      pointer-events: none;
+    }
+    .frame-corner.tl { top: -1px; left: -1px; border-top: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+    .frame-corner.tr { top: -1px; right: -1px; border-top: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+    .frame-corner.bl { bottom: -1px; left: -1px; border-bottom: 2px solid var(--gold); border-left: 2px solid var(--gold); }
+    .frame-corner.br { bottom: -1px; right: -1px; border-bottom: 2px solid var(--gold); border-right: 2px solid var(--gold); }
+
+    .oxi-card {
+      background: var(--surface);
+      border: 1px solid var(--line-soft);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .oxi-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--line);
+      box-shadow: 0 14px 30px -14px rgba(201,162,39,0.25);
+    }
+    .oxi-img-wrap { overflow: hidden; background: var(--surface-2); }
+    .oxi-img { transition: transform 0.5s cubic-bezier(.2,.8,.2,1); }
+    .oxi-card:hover .oxi-img { transform: scale(1.06); }
+
+    .seal-badge {
+      font-family: 'Playfair Display', serif;
+      border: 1px solid var(--gold);
+      background: rgba(10,10,10,0.72);
+      color: var(--gold-bright);
+    }
+
+    .chip {
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      border: 1px solid var(--line-soft);
+    }
+    .chip.active {
+      background: var(--gold);
+      color: var(--pitch);
+      border-color: var(--gold);
+    }
+    .chip:not(.active):hover { border-color: var(--line); }
+
+    .size-chip {
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      border: 1px solid var(--line-soft);
+    }
+    .size-chip.selected {
+      background: var(--cream);
+      color: var(--pitch);
+      border-color: var(--cream);
+    }
+
+    .wa-btn {
+      background: var(--gold);
+      color: var(--pitch);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+    .wa-btn:hover {
+      transform: translateY(-2px);
+      background: var(--gold-bright);
+      box-shadow: 0 10px 24px -8px rgba(201,162,39,0.45);
+    }
+    .wa-btn:focus-visible, .chip:focus-visible, .size-chip:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 2px;
+    }
+
+    .oxi-input {
+      background: var(--surface-2);
+      border: 1px solid var(--line-soft);
+      color: var(--cream);
+    }
+    .oxi-input::placeholder { color: var(--cream-dim); }
+    .oxi-input:focus { border-color: var(--gold); outline: none; }
+
+    .drawer { animation: drawerIn 0.3s cubic-bezier(.2,.8,.2,1) forwards; }
+    .no-motion .drawer { animation: none; }
+
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+  
+body {
+  background: var(--pitch, #0A0A0A);
+  color: var(--cream, #F5F1E6);
+}
