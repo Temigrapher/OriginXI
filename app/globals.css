@@ -53,6 +53,18 @@
     .card-reveal.in {
       animation: fadeSlideUp 0.6s cubic-bezier(.2,.8,.2,1) forwards;
     }
+    @keyframes pulseSkeleton {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.9; }
+    }
+    .skeleton-block {
+      background: var(--surface-2);
+      animation: pulseSkeleton 1.6s ease-in-out infinite;
+    }
+    /* Media query (not .no-motion) because the skeleton paints before React hydrates. */
+    @media (prefers-reduced-motion: reduce) {
+      .skeleton-block { animation: none; opacity: 0.7; }
+    }
     .no-motion .anim-word, .no-motion .anim-corner, .no-motion .card-reveal {
       animation: none !important;
       opacity: 1 !important;

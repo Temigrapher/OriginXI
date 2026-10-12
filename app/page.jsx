@@ -11,11 +11,17 @@ import { loadCart, saveCart } from '@/lib/cart';
 import { fetchProducts, createProduct, updateProduct, deleteProduct } from '@/lib/api';
 
 import FrameCorners from '@/components/FrameCorners';
+import ProductCardSkeleton from '@/components/ProductCardSkeleton';
 import ProductCard from '@/components/ProductCard';
 import FaqItem from '@/components/FaqItem';
 import AdminDrawer from '@/components/AdminDrawer';
 import CartDrawer from '@/components/CartDrawer';
 import PasscodeGate from '@/components/PasscodeGate';
+import SizeGuideModal from '@/components/SizeGuideModal';
+
+// Stock is tracked per kit, not per size, so caps count a kit's units across all of its sizes.
+const unitsInCart = (lines, productId) =>
+  lines.reduce((sum, item) => (item.productId === productId ? sum + item.qty : sum), 0);
 
 export default function OriginXIShop() {
   const [products, setProducts] = useState([]);
@@ -23,6 +29,7 @@ export default function OriginXIShop() {
   const [loadError, setLoadError] = useState('');
   const [filter, setFilter] = useState('All');
   const [selectedSizes, setSelectedSizes] = useState({});
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
 
   const [showPasscode, setShowPasscode] = useState(false);
   const [passcode, setPasscode] = useState(''); // held in memory only, never persisted
@@ -31,6 +38,7 @@ export default function OriginXIShop() {
   const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [showCart, setShowCart] = useState(false);
+  const [cartNotices, setCartNotices] = useState([]);
 
   const reducedMotion = useReducedMotion();
 
@@ -55,6 +63,35 @@ export default function OriginXIShop() {
     setCartLoaded(true);
   }, []);
 
+  // Reconcile cart against the current catalog whenever products load/change,
+  // so checkout never sends a stale price or an item that's since been removed.
+  useEffect(() => {
+    if (!cartLoaded || products.length === 0 || cart.length === 0) return;
+    const notices = [];
+    const next = [];
+    for (const item of cart) {
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) {
+        notices.push(`${item.club} is no longer available and was removed from your cart.`);
+        continue;
+      }
+      const currentPrice = effectivePrice(product);
+      if (currentPrice !== item.price) {
+        notices.push(`${item.club} price updated to ₦${currentPrice.toLocaleString()}.`);
+        next.push({ ...item, price: currentPrice });
+      } else {
+        next.push(item);
+      }
+    }
+    if (notices.length > 0) {
+      setCart(next);
+      setCartNotices(notices);
+    }
+    // Deliberately depends only on [products, cartLoaded] — not [cart] — to avoid
+    // re-triggering itself when it calls setCart above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, cartLoaded]);
+
   // Persist cart to localStorage on every change, after the initial load.
   useEffect(() => {
     if (cartLoaded) saveCart(cart);
@@ -74,21 +111,32 @@ export default function OriginXIShop() {
   const handleAddToCart = (product, size) => {
     const key = `${product.id}-${size || 'nosize'}`;
     setCart((prev) => {
+      if (typeof product.stock === 'number' && unitsInCart(prev, product.id) >= product.stock) {
+        return prev; // already holding all the stock for this kit, don't add more
+      }
       const existing = prev.find((item) => item.key === key);
       if (existing) {
         return prev.map((item) => (item.key === key ? { ...item, qty: item.qty + 1 } : item));
       }
       return [...prev, {
         key, productId: product.id, club: product.club, category: product.category,
-       size: size || null, price: effectivePrice(product), qty: 1,
+        size: size || null, price: effectivePrice(product), qty: 1,
       }];
     });
   };
 
   const handleUpdateCartQty = (key, delta) => {
-    setCart((prev) => prev
-      .map((item) => (item.key === key ? { ...item, qty: item.qty + delta } : item))
-      .filter((item) => item.qty > 0));
+    setCart((prev) => {
+      const line = prev.find((item) => item.key === key);
+      if (!line) return prev;
+      if (delta > 0) {
+        const stock = products.find((p) => p.id === line.productId)?.stock;
+        if (typeof stock === 'number' && unitsInCart(prev, line.productId) + delta > stock) return prev;
+      }
+      return prev
+        .map((item) => (item.key === key ? { ...item, qty: item.qty + delta } : item))
+        .filter((item) => item.qty > 0);
+    });
   };
 
   const handleRemoveFromCart = (key) => {
@@ -98,6 +146,12 @@ export default function OriginXIShop() {
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
   const filtered = filter === 'All' ? products : products.filter((p) => p.category === filter);
   const headlineWords = ['SAME', 'BADGE.', 'NEW', 'SEASON.'];
+
+  // The drawer's "+" is disabled once a kit's total in the cart reaches its stock (stock not set = no limit).
+  const canIncreaseQty = (item) => {
+    const stock = products.find((p) => p.id === item.productId)?.stock;
+    return typeof stock !== 'number' || unitsInCart(cart, item.productId) < stock;
+  };
 
   return (
     <div className={`oxi-root ${reducedMotion ? 'no-motion' : ''}`}>
@@ -176,7 +230,9 @@ export default function OriginXIShop() {
         <p className="text-sm mb-8" style={{ color: 'var(--cream-dim)' }}>{filtered.length} kit{filtered.length !== 1 ? 's' : ''} available</p>
 
         {!loaded ? (
-          <p className="text-sm" style={{ color: 'var(--cream-dim)' }}>Loading catalog…</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+            {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
+          </div>
         ) : loadError ? (
           <div className="text-center py-16 rounded-2xl" style={{ border: '1px dashed rgba(217,119,111,0.4)' }}>
             <p className="f-display font-bold text-2xl mb-2" style={{ color: '#D9776F' }}>Couldn't load the catalog</p>
@@ -194,6 +250,7 @@ export default function OriginXIShop() {
                   selectedSize={selectedSizes[p.id]}
                   onSelectSize={(id, size) => setSelectedSizes((s) => ({ ...s, [id]: size }))}
                   onAddToCart={handleAddToCart}
+                  onOpenSizeGuide={() => setShowSizeGuide(true)}
                 />
               ))}
             </div>
@@ -217,6 +274,8 @@ export default function OriginXIShop() {
                 selectedSize={selectedSizes[p.id]}
                 onSelectSize={(id, size) => setSelectedSizes((s) => ({ ...s, [id]: size }))}
                 onAddToCart={handleAddToCart}
+                onOpenSizeGuide={() => setShowSizeGuide(true)}
+                cartQty={unitsInCart(cart, p.id)}
               />
             ))}
           </div>
@@ -280,10 +339,15 @@ export default function OriginXIShop() {
         <CartDrawer
           items={cart}
           onUpdateQty={handleUpdateCartQty}
+          canIncrease={canIncreaseQty}
           onRemove={handleRemoveFromCart}
           onClose={() => setShowCart(false)}
+          notices={cartNotices}
+          onDismissNotices={() => setCartNotices([])}
         />
       )}
+
+      {showSizeGuide && <SizeGuideModal onClose={() => setShowSizeGuide(false)} />}
 
       {cartCount > 0 && !showCart && (
         <button

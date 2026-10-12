@@ -1,21 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ImageOff, Check, ShoppingBag } from 'lucide-react';
+import { ImageOff, Check, ShoppingBag, Ruler } from 'lucide-react';
 import { useInView } from '@/lib/hooks';
 import { effectivePrice, isOnSale } from '@/lib/utils';   
 
-export default function ProductCard({ product, index, selectedSize, onSelectSize, onAddToCart, reducedMotion }) {
+export default function ProductCard({ product, index, selectedSize, onSelectSize, onAddToCart, onOpenSizeGuide, reducedMotion, cartQty = 0 }) {
   const [ref, inView] = useInView();
   const [imgError, setImgError] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
-  const onSale = isOnSale(product);             
-  const displayPrice = effectivePrice(product);   
+  const onSale = isOnSale(product);
+  const displayPrice = effectivePrice(product);
   const num = String(index + 1).padStart(2, '0');
   const soldOut = product.stock === 0;
   const lowStock = typeof product.stock === 'number' && product.stock > 0 && product.stock <= 3;
   const needsSize = product.sizes?.length > 0;
-  const canAdd = !needsSize || Boolean(selectedSize);
+  const atStockLimit = typeof product.stock === 'number' && cartQty >= product.stock;
+  const canAdd = (!needsSize || Boolean(selectedSize)) && !atStockLimit;
 
   useEffect(() => {
     if (!justAdded) return;
@@ -96,17 +97,27 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
         </div>
 
         {product.sizes?.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {product.sizes.map((s) => (
-              <button
-                key={s}
-                onClick={() => onSelectSize(product.id, s)}
-                className={`size-chip rounded-md px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium ${selectedSize === s ? 'selected' : ''}`}
-                style={{ color: selectedSize === s ? undefined : 'var(--cream)' }}
-              >
-                {s}
-              </button>
-            ))}
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap gap-1">
+              {product.sizes.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => onSelectSize(product.id, s)}
+                  className={`size-chip rounded-md px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium ${selectedSize === s ? 'selected' : ''}`}
+                  style={{ color: selectedSize === s ? undefined : 'var(--cream)' }}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={onOpenSizeGuide}
+              className="flex items-center gap-1 text-[10px] w-fit"
+              style={{ color: 'var(--cream-dim)' }}
+            >
+              <Ruler size={10} /> Size guide
+            </button>
           </div>
         )}
 
@@ -124,7 +135,7 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
           <button
             onClick={handleAdd}
             disabled={!canAdd}
-            title={!canAdd ? 'Pick a size first' : undefined}
+            title={atStockLimit ? 'You already have all the available stock in your cart' : (!canAdd ? 'Pick a size first' : undefined)}
             className="wa-btn mt-auto rounded-lg px-2 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-1.5 font-semibold text-[11px] sm:text-sm"
             style={{ opacity: canAdd ? 1 : 0.45, cursor: canAdd ? 'pointer' : 'not-allowed' }}
           >
@@ -133,6 +144,8 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
                 <Check size={14} strokeWidth={3} className="shrink-0" />
                 Added
               </>
+            ) : atStockLimit ? (
+              <span>Max in cart</span>
             ) : (
               <>
                 <ShoppingBag size={14} strokeWidth={2.5} className="shrink-0" />
