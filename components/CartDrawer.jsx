@@ -3,6 +3,9 @@
 import { X, Trash2, Minus, Plus, MessageCircle, AlertTriangle } from 'lucide-react';
 import { cartWaLink } from '@/lib/whatsapp';
 
+// Names a cart line for screen readers, e.g. "Arsenal Away, size S".
+const itemLabel = (item) => `${item.club} ${item.category}${item.size ? `, size ${item.size}` : ''}`;
+
 export default function CartDrawer({ items, onUpdateQty, onRemove, onClose, notices = [], onDismissNotices, canIncrease = () => true }) {
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
 
@@ -15,7 +18,7 @@ export default function CartDrawer({ items, onUpdateQty, onRemove, onClose, noti
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="f-display font-bold text-3xl">Your Cart</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }}>
+          <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }} aria-label="Close cart">
             <X size={18} />
           </button>
         </div>
@@ -28,7 +31,7 @@ export default function CartDrawer({ items, onUpdateQty, onRemove, onClose, noti
                 <p key={i} className="text-xs" style={{ color: 'var(--cream)' }}>{n}</p>
               ))}
             </div>
-            <button onClick={onDismissNotices} className="text-xs shrink-0" style={{ color: 'var(--cream-dim)' }} aria-label="Dismiss">
+            <button onClick={onDismissNotices} className="text-xs shrink-0" style={{ color: 'var(--cream-dim)' }} aria-label="Dismiss notice">
               <X size={14} />
             </button>
           </div>
@@ -51,14 +54,15 @@ export default function CartDrawer({ items, onUpdateQty, onRemove, onClose, noti
                     </p>
                   </div>
                   <div className="flex flex-col items-end justify-between">
-                    <button onClick={() => onRemove(item.key)} style={{ color: '#D9776F' }}>
+                    <button onClick={() => onRemove(item.key)} style={{ color: '#D9776F' }} aria-label={`Remove ${itemLabel(item)} from cart`}>
                       <Trash2 size={15} />
                     </button>
                     <div className="flex items-center gap-2 rounded-full px-1" style={{ border: '1px solid var(--line-soft)' }}>
-                      <button onClick={() => onUpdateQty(item.key, -1)} className="p-1"><Minus size={13} /></button>
+                      <button onClick={() => onUpdateQty(item.key, -1)} className="p-1" aria-label={`Decrease quantity of ${itemLabel(item)}`}><Minus size={13} /></button>
                       <span className="f-label text-xs w-4 text-center">{item.qty}</span>
                       <button
                         onClick={() => onUpdateQty(item.key, 1)}
+                        aria-label={`Increase quantity of ${itemLabel(item)}`}
                         disabled={!canIncrease(item)}
                         className="p-1 disabled:opacity-30 disabled:cursor-not-allowed"
                       >

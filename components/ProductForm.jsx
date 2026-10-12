@@ -206,7 +206,7 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
           Cancel
         </button>
         {isEditing && (
-          <button type="button" disabled={saving} onClick={handleDelete}
+          <button type="button" disabled={saving} onClick={handleDelete} aria-label="Delete this kit"
                   className="rounded-lg px-3 py-2.5 text-sm"
                   style={{ color: '#D9776F', border: '1px solid rgba(217,119,111,0.35)' }}>
             <Trash2 size={16} />

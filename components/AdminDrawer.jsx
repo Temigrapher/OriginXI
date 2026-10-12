@@ -17,7 +17,7 @@ export default function AdminDrawer({ products, onSave, onDelete, onClose, passc
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="f-display font-bold text-3xl">Manage Catalog</h2>
-          <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }}>
+          <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }} aria-label="Close catalog manager">
             <X size={18} />
           </button>
         </div>
@@ -53,7 +53,7 @@ export default function AdminDrawer({ products, onSave, onDelete, onClose, passc
                 <p className="text-sm font-medium truncate">{p.club}</p>
                 <p className="text-xs" style={{ color: 'var(--cream-dim)' }}>₦{Number(p.price).toLocaleString()} · {p.category}</p>
               </div>
-              <button onClick={() => setEditingId(p.id)} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }}>
+              <button onClick={() => setEditingId(p.id)} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }} aria-label={`Edit ${p.club} (${p.category})`}>
                 <Pencil size={14} />
               </button>
             </div>
