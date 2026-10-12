@@ -151,6 +151,12 @@ export default function OriginXIShop() {
   useEffect(() => {
     if (activeFilter !== filter) setFilter(activeFilter);
   }, [activeFilter, filter]);
+  // The cheapest price a buyer can actually get (sale price counts, sold-out kits don't); null until
+  // there are real kits, so the hero line stays hidden for the demo grid, errors and empty catalogs.
+  const startingPrice = useMemo(() => {
+    const prices = products.filter((p) => p.stock !== 0).map(effectivePrice);
+    return prices.length > 0 ? Math.min(...prices) : null;
+  }, [products]);
   const filtered = activeFilter === 'All' ? products : products.filter((p) => p.category === activeFilter);
   const headlineWords = ['SAME', 'BADGE.', 'NEW', 'SEASON.'];
 
@@ -187,8 +193,14 @@ export default function OriginXIShop() {
                 <span key={w} className="anim-word mr-3" style={{ animationDelay: `${i * 110}ms`, color: w.startsWith('SEASON') ? 'var(--gold)' : undefined }}>{w}</span>
               ))}
             </h1>
-            <p className="f-display-italic text-base sm:text-lg max-w-md mx-auto mb-8" style={{ color: 'var(--cream-dim)' }}>
+            <p className="f-display-italic text-base sm:text-lg max-w-md mx-auto mb-3" style={{ color: 'var(--cream-dim)' }}>
               Curated. Authenticated. Celebrated. — now for what's on the pitch today.
+            </p>
+            {/* Height is reserved so the hero doesn't jump when the price appears after the catalog loads. */}
+            <p className="text-sm mb-6 min-h-[1.25rem]" style={{ color: 'var(--cream-dim)' }}>
+              {startingPrice !== null && (
+                <>Kits from <span className="font-semibold" style={{ color: 'var(--gold-bright)' }}>₦{startingPrice.toLocaleString()}</span></>
+              )}
             </p>
             <a href="#squad" className="inline-flex items-center gap-1.5 text-sm font-semibold px-5 py-2.5 rounded-full wa-btn">
               See the kits <ChevronDown size={15} />
