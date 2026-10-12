@@ -1,7 +1,7 @@
 'use client';
 
 import { effectivePrice } from '@/lib/utils';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { MessageCircle, ChevronDown, ShieldCheck, Truck, Ruler, Lock, ShoppingBag } from 'lucide-react';
 
 import { useReducedMotion } from '@/lib/hooks';
@@ -144,7 +144,14 @@ export default function OriginXIShop() {
   };
 
   const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
-  const filtered = filter === 'All' ? products : products.filter((p) => p.category === filter);
+  // Only offer a chip for categories that have kits. If the active one empties out (say its last kit
+  // is deleted) fall back to All; deriving it here avoids a flash of the empty-category message.
+  const availableCategories = useMemo(() => CATEGORIES.filter((c) => products.some((p) => p.category === c)), [products]);
+  const activeFilter = filter === 'All' || availableCategories.includes(filter) ? filter : 'All';
+  useEffect(() => {
+    if (activeFilter !== filter) setFilter(activeFilter);
+  }, [activeFilter, filter]);
+  const filtered = activeFilter === 'All' ? products : products.filter((p) => p.category === activeFilter);
   const headlineWords = ['SAME', 'BADGE.', 'NEW', 'SEASON.'];
 
   // The drawer's "+" is disabled once a kit's total in the cart reaches its stock (stock not set = no limit).
@@ -211,11 +218,11 @@ export default function OriginXIShop() {
       {/* FILTER BAR */}
       <div className="sticky top-[57px] z-30 backdrop-blur-sm" style={{ background: 'rgba(10,10,10,0.88)', borderBottom: '1px solid var(--line-soft)' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex gap-2 overflow-x-auto scrollbar-thin">
-          {['All', ...CATEGORIES].map((c) => (
+          {['All', ...availableCategories].map((c) => (
             <button
               key={c}
               onClick={() => setFilter(c)}
-              className={`chip whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium ${filter === c ? 'active' : ''}`}
+              className={`chip whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium ${activeFilter === c ? 'active' : ''}`}
             >
               {c}
             </button>
