@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { ImageOff, Check, ShoppingBag, Ruler } from 'lucide-react';
 import { useInView } from '@/lib/hooks';
-import { effectivePrice, isOnSale } from '@/lib/utils';   
+import { effectivePrice, isOnSale } from '@/lib/utils';
+import { notifyLink } from '@/lib/whatsapp';
 
 export default function ProductCard({ product, index, selectedSize, onSelectSize, onAddToCart, onOpenSizeGuide, reducedMotion, cartQty = 0 }) {
   const [ref, inView] = useInView();
@@ -122,10 +123,23 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
         )}
 
         {soldOut ? (
-          <div className="mt-auto rounded-lg px-2 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-1.5 font-semibold text-[11px] sm:text-sm text-center"
-               style={{ border: '1px solid var(--line-soft)', color: 'var(--cream-dim)' }}>
-            Notify me
-          </div>
+          product.isDemo ? (
+            <div className="mt-auto rounded-lg px-2 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-1.5 font-semibold text-[11px] sm:text-sm text-center"
+                 style={{ border: '1px solid var(--line-soft)', color: 'var(--cream-dim)' }}>
+              Notify me on WhatsApp
+            </div>
+          ) : (
+            <a
+              href={notifyLink(product)}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Notify me on WhatsApp when ${product.club} ${product.category} is back in stock`}
+              className="mt-auto rounded-lg px-1.5 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-1.5 font-semibold text-[11px] sm:text-sm text-center leading-tight"
+              style={{ border: '1px solid var(--gold)', color: 'var(--gold-bright)' }}
+            >
+              Notify me on WhatsApp
+            </a>
+          )
         ) : product.isDemo ? (
           <div className="mt-auto rounded-lg px-2 py-2 sm:px-4 sm:py-2.5 flex items-center justify-center gap-1.5 font-semibold text-[11px] sm:text-sm text-center"
                style={{ border: '1px dashed var(--line-soft)', color: 'var(--cream-dim)' }}>
