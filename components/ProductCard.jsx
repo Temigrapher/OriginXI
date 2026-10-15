@@ -188,6 +188,7 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
                 <button
                   key={s}
                   onClick={() => onSelectSize(product.id, s)}
+                  aria-pressed={selectedSize === s}
                   className={`size-chip rounded-md px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-medium ${selectedSize === s ? 'selected' : ''}`}
                   style={{ color: selectedSize === s ? undefined : 'var(--cream)' }}
                 >

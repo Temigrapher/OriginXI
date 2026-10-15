@@ -1,18 +1,26 @@
 'use client';
 
+import { useId } from 'react';
 import { X } from 'lucide-react';
 import { SIZE_GUIDE } from '@/lib/constants';
+import { useDialog } from '@/lib/hooks';
 
 export default function SizeGuideModal({ onClose }) {
+  const titleId = useId();
+  const dialogRef = useDialog(onClose);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(10,10,10,0.75)' }} onClick={onClose}>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-sm rounded-2xl p-6"
         style={{ background: 'var(--surface)', border: '1px solid var(--line-soft)' }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="f-display font-bold text-2xl">Size Guide</h3>
+          <h3 id={titleId} className="f-display font-bold text-2xl">Size Guide</h3>
           <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }} aria-label="Close size guide">
             <X size={18} />
           </button>

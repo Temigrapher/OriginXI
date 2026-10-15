@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useReducedMotion } from '@/lib/hooks';
+import { useReducedMotion, useDialog } from '@/lib/hooks';
 
 // Full-screen photo viewer, one instance for the whole page (like SizeGuideModal) so it is never trapped
 // inside a card. Swipe, the arrow buttons or the arrow keys move between photos; tapping a photo zooms it.
@@ -10,23 +10,15 @@ export default function PhotoLightbox({ photos, startIndex = 0, title, onClose }
   const [index, setIndex] = useState(startIndex);
   const [zoomed, setZoomed] = useState(false);
   const reducedMotion = useReducedMotion();
-  const dialogRef = useRef(null);
   const stripRef = useRef(null);
   const closeRef = useRef(null);
+  // Escape, Tab-trapping, the page scroll lock and focus in/out are shared with the other dialogs.
+  const dialogRef = useDialog(onClose, closeRef);
   const many = photos.length > 1;
 
-  // On open: land on the tapped photo, lock the page behind, move focus in. On close: undo all three.
+  // On open, land on the tapped photo (startIndex is only the starting point).
   useEffect(() => {
-    const opener = document.activeElement;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     if (stripRef.current) stripRef.current.scrollLeft = startIndex * stripRef.current.clientWidth;
-    if (closeRef.current) closeRef.current.focus();
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      if (opener && typeof opener.focus === 'function') opener.focus();
-    };
-    // Runs once per open; startIndex is only the starting point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -37,26 +29,11 @@ export default function PhotoLightbox({ photos, startIndex = 0, title, onClose }
     el.scrollTo({ left: i * el.clientWidth, behavior: reducedMotion ? 'auto' : 'smooth' });
   };
 
-  // Keep Tab inside the dialog while it is open.
-  const trapFocus = (e) => {
-    const root = dialogRef.current;
-    const nodes = root ? [...root.querySelectorAll('button:not([disabled])')] : [];
-    if (nodes.length === 0) { e.preventDefault(); return; }
-    const first = nodes[0];
-    const last = nodes[nodes.length - 1];
-    const active = document.activeElement;
-    if (!root.contains(active)) { e.preventDefault(); first.focus(); }
-    else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
-  };
-
-  // Re-bound every render so it always sees the current photo (cheap, and avoids stale closures).
+  // Arrow keys move between photos. Re-bound every render so it always sees the current photo.
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); onClose(); }
-      else if (e.key === 'ArrowRight') goTo(index + 1);
+      if (e.key === 'ArrowRight') goTo(index + 1);
       else if (e.key === 'ArrowLeft') goTo(index - 1);
-      else if (e.key === 'Tab') trapFocus(e);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

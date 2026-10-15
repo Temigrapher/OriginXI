@@ -182,6 +182,7 @@ export default function OriginXIShop() {
         </div>
       </header>
 
+      <main>
       {/* HERO */}
       <section className="px-4 sm:px-6 pt-10 sm:pt-16 pb-10">
         <div className="max-w-3xl mx-auto frame-outer rounded-sm">
@@ -231,11 +232,12 @@ export default function OriginXIShop() {
 
       {/* FILTER BAR */}
       <div className="sticky top-[57px] z-30 backdrop-blur-sm" style={{ background: 'rgba(10,10,10,0.88)', borderBottom: '1px solid var(--line-soft)' }}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex gap-2 overflow-x-auto scrollbar-thin">
+        <div role="group" aria-label="Filter kits by category" className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex gap-2 overflow-x-auto scrollbar-thin">
           {['All', ...availableCategories].map((c) => (
             <button
               key={c}
               onClick={() => setFilter(c)}
+              aria-pressed={activeFilter === c}
               className={`chip whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium ${activeFilter === c ? 'active' : ''}`}
             >
               {c}
@@ -314,6 +316,7 @@ export default function OriginXIShop() {
           ))}
         </div>
       </section>
+      </main>
 
       {/* FOOTER */}
       <footer className="mt-10 px-4 sm:px-6 py-10" style={{ borderTop: '1px solid var(--line-soft)' }}>
@@ -375,10 +378,12 @@ export default function OriginXIShop() {
         <PhotoLightbox photos={viewer.photos} startIndex={viewer.startIndex} title={viewer.title} onClose={() => setViewer(null)} />
       )}
 
-      {cartCount > 0 && !showCart && (
+      {cartCount > 0 && (
+        // Stays in the page (just hidden) while the cart is open, so keyboard focus has somewhere to come back to.
         <button
           onClick={() => setShowCart(true)}
-          className="wa-btn fixed bottom-5 right-5 z-40 rounded-full pl-4 pr-5 py-3 flex items-center gap-2 font-semibold text-sm shadow-lg"
+          aria-label={`Cart, ${cartCount} item${cartCount === 1 ? '' : 's'}`}
+          className={`wa-btn fixed bottom-5 right-5 z-40 rounded-full pl-4 pr-5 py-3 flex items-center gap-2 font-semibold text-sm shadow-lg ${showCart ? 'invisible' : ''}`}
         >
           <span className="relative">
             <ShoppingBag size={18} strokeWidth={2.5} />

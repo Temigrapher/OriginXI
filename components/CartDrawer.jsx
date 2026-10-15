@@ -1,23 +1,31 @@
 'use client';
 
+import { useId } from 'react';
 import { X, Trash2, Minus, Plus, MessageCircle, AlertTriangle } from 'lucide-react';
 import { cartWaLink } from '@/lib/whatsapp';
+import { useDialog } from '@/lib/hooks';
 
 // Names a cart line for screen readers, e.g. "Arsenal Away, size S".
 const itemLabel = (item) => `${item.club} ${item.category}${item.size ? `, size ${item.size}` : ''}`;
 
 export default function CartDrawer({ items, onUpdateQty, onRemove, onClose, notices = [], onDismissNotices, canIncrease = () => true }) {
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const titleId = useId();
+  const dialogRef = useDialog(onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,10,10,0.65)' }} onClick={onClose}>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="drawer w-full max-w-md h-full overflow-y-auto scrollbar-thin p-6 flex flex-col"
         style={{ background: 'var(--surface)', borderLeft: '1px solid var(--line-soft)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="f-display font-bold text-3xl">Your Cart</h2>
+          <h2 id={titleId} className="f-display font-bold text-3xl">Your Cart</h2>
           <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }} aria-label="Close cart">
             <X size={18} />
           </button>

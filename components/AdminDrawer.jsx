@@ -1,22 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { X, Plus, Pencil } from 'lucide-react';
 import ProductForm from './ProductForm';
+import { useDialog } from '@/lib/hooks';
 
 export default function AdminDrawer({ products, onSave, onDelete, onClose, passcode }) {
   const [editingId, setEditingId] = useState('__new__');
   const editingProduct = editingId === '__new__' ? null : products.find((p) => p.id === editingId);
+  const titleId = useId();
+  const dialogRef = useDialog(onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" style={{ background: 'rgba(10,10,10,0.65)' }} onClick={onClose}>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="drawer w-full max-w-md h-full overflow-y-auto scrollbar-thin p-6"
         style={{ background: 'var(--surface)', borderLeft: '1px solid var(--line-soft)' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h2 className="f-display font-bold text-3xl">Manage Catalog</h2>
+          <h2 id={titleId} className="f-display font-bold text-3xl">Manage Catalog</h2>
           <button onClick={onClose} className="p-1.5 rounded-md" style={{ border: '1px solid var(--line-soft)' }} aria-label="Close catalog manager">
             <X size={18} />
           </button>

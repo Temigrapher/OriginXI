@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useId } from 'react';
 import { Trash2, Image as ImageIcon, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { newId } from '@/lib/utils';
 import { CATEGORIES, MAX_KIT_PHOTOS } from '@/lib/constants';
@@ -27,6 +27,8 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
   const [linkText, setLinkText] = useState('');
   const fileInputRef = useRef(null);
   const isEditing = Boolean(initial && initial.id);
+  const uid = useId();
+  const fid = (name) => `${uid}-${name}`; // ties each label to its field
 
   const update = (field, value) => setForm((f) => ({ ...f, [field]: value }));
 
@@ -137,8 +139,9 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div>
-        <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Club name</label>
+        <label htmlFor={fid('club')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Club name</label>
         <input
+          id={fid('club')}
           className="oxi-input w-full rounded-lg px-3 py-2 mt-1"
           placeholder="e.g. Real Madrid"
           value={form.club}
@@ -149,8 +152,9 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Price (₦)</label>
+          <label htmlFor={fid('price')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Price (₦)</label>
           <input
+            id={fid('price')}
             className="oxi-input w-full rounded-lg px-3 py-2 mt-1"
             placeholder="25000"
             type="number"
@@ -161,8 +165,9 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
           />
         </div>
         <div>
-          <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Sale price (optional)</label>
+          <label htmlFor={fid('sale')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Sale price (optional)</label>
           <input
+            id={fid('sale')}
             className="oxi-input w-full rounded-lg px-3 py-2 mt-1"
             placeholder="Leave blank if no discount"
             type="number"
@@ -177,8 +182,9 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
       )}
 
       <div>
-        <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Category</label>
+        <label htmlFor={fid('category')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Category</label>
         <select
+          id={fid('category')}
           className="oxi-input w-full rounded-lg px-3 py-2 mt-1"
           value={form.category}
           onChange={(e) => update('category', e.target.value)}
@@ -188,8 +194,9 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
       </div>
 
       <div>
-        <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Sizes (comma separated)</label>
+        <label htmlFor={fid('sizes')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Sizes (comma separated)</label>
         <input
+          id={fid('sizes')}
           className="oxi-input w-full rounded-lg px-3 py-2 mt-1"
           placeholder="S, M, L, XL"
           value={form.sizes}
@@ -198,8 +205,10 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
       </div>
 
       <div>
-        <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Stock on hand (optional)</label>
+        <label htmlFor={fid('stock')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Stock on hand (optional)</label>
         <input
+          id={fid('stock')}
+          aria-describedby={fid('stock-help')}
           className="oxi-input w-full rounded-lg px-3 py-2 mt-1"
           placeholder="Leave blank to hide stock count"
           type="number"
@@ -207,12 +216,12 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
           value={form.stock}
           onChange={(e) => update('stock', e.target.value)}
         />
-        <p className="text-xs mt-1" style={{ color: 'var(--cream-dim)' }}>Shows "Only X left" at 3 or fewer, or "Sold Out" at 0 — builds urgency and stops orders you can't fulfil.</p>
+        <p id={fid('stock-help')} className="text-xs mt-1" style={{ color: 'var(--cream-dim)' }}>Shows "Only X left" at 3 or fewer, or "Sold Out" at 0 — builds urgency and stops orders you can't fulfil.</p>
       </div>
 
-      <div data-photo-manager>
+      <div data-photo-manager role="group" aria-labelledby={fid('photos')}>
         <div className="flex items-baseline justify-between gap-2">
-          <label className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Kit photos</label>
+          <span id={fid('photos')} className="f-label text-xs" style={{ color: 'var(--cream-dim)' }}>Kit photos</span>
           <span className="text-xs" style={{ color: 'var(--cream-dim)' }}>{form.imageUrls.length} of {MAX_KIT_PHOTOS} photos</span>
         </div>
         <p className="text-xs mt-1" style={{ color: 'var(--cream-dim)' }}>The first photo is the cover shown on the shop grid. You can choose several photos at once.</p>
@@ -261,6 +270,7 @@ export default function ProductForm({ initial, onSave, onCancel, onDelete, passc
           <div className="flex gap-2 mt-2">
             <input
               className="oxi-input flex-1 min-w-0 rounded-lg px-3 py-2"
+              aria-label="Image URL"
               placeholder="https://..."
               value={linkText}
               onChange={(e) => setLinkText(e.target.value)}
