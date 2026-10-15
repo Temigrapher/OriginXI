@@ -162,7 +162,11 @@
 
     .scrollbar-thin::-webkit-scrollbar { width: 6px; }
     .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
-  
+
+    /* Swipeable photo strips (kit cards and the photo viewer): no scrollbar, no browser back-swipe at the edges */
+    .oxi-strip { scrollbar-width: none; overscroll-behavior-x: contain; }
+    .oxi-strip::-webkit-scrollbar { display: none; }
+
 body {
   background: var(--pitch, #0A0A0A);
   color: var(--cream, #F5F1E6);

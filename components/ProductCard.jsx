@@ -6,10 +6,16 @@ import { useInView } from '@/lib/hooks';
 import { effectivePrice, isOnSale } from '@/lib/utils';
 import { notifyLink } from '@/lib/whatsapp';
 
-export default function ProductCard({ product, index, selectedSize, onSelectSize, onAddToCart, onOpenSizeGuide, reducedMotion, cartQty = 0 }) {
+export default function ProductCard({ product, index, selectedSize, onSelectSize, onAddToCart, onOpenSizeGuide, onOpenPhotos, reducedMotion, cartQty = 0 }) {
   const [ref, inView] = useInView();
-  const [imgError, setImgError] = useState(false);
+  const [failed, setFailed] = useState({});       // photo index -> true once that photo has failed to load
+  const [touched, setTouched] = useState(false);  // extra photos are only downloaded once someone touches the card
+  const [activePhoto, setActivePhoto] = useState(0);
   const [justAdded, setJustAdded] = useState(false);
+  const photos = product.imageUrls?.length ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
+  const many = photos.length > 1;
+  const kitName = `${product.club} ${product.category}`;
+  const canOpen = Boolean(onOpenPhotos) && !product.isDemo;
   const onSale = isOnSale(product);
   const displayPrice = effectivePrice(product);
   const num = String(index + 1).padStart(2, '0');
@@ -24,6 +30,53 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
     const t = setTimeout(() => setJustAdded(false), 1200);
     return () => clearTimeout(t);
   }, [justAdded]);
+
+  // If the owner changes this kit's photos while the shop is open, start the strip afresh.
+  const photosKey = photos.join('|');
+  const [seenPhotosKey, setSeenPhotosKey] = useState(photosKey);
+  if (seenPhotosKey !== photosKey) {
+    setSeenPhotosKey(photosKey);
+    setFailed({});
+    setActivePhoto(0);
+  }
+
+  const onStripScroll = (e) => {
+    const el = e.currentTarget;
+    setTouched(true);
+    const i = Math.round(el.scrollLeft / (el.clientWidth || 1));
+    setActivePhoto((cur) => (cur === i ? cur : i));
+  };
+
+  const noPhoto = (
+    <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: 'var(--cream-dim)' }}>
+      <ImageOff size={28} strokeWidth={1.5} />
+      <span className="f-label text-[10px]">image unavailable</span>
+    </div>
+  );
+
+  const photoNode = (src, i) => {
+    if (failed[i]) return noPhoto;
+    const img = (
+      <img
+        src={src}
+        alt={many ? `${kitName} kit, photo ${i + 1} of ${photos.length}` : `${kitName} kit`}
+        className="oxi-img w-full h-full object-cover"
+        onError={() => setFailed((f) => ({ ...f, [i]: true }))}
+        loading="lazy"
+      />
+    );
+    if (!canOpen) return img;
+    return (
+      <button
+        type="button"
+        onClick={() => onOpenPhotos(photos, i, kitName)}
+        aria-label={many ? `Open ${kitName} photo ${i + 1} of ${photos.length}` : `Open ${kitName} photo`}
+        className="block w-full h-full"
+      >
+        {img}
+      </button>
+    );
+  };
 
   const handleAdd = () => {
     if (!canAdd || product.isDemo) return;
@@ -44,15 +97,15 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
             Demo layout — add your kits below
           </div>
         )}
-        <div className="seal-badge absolute top-2 left-2 sm:top-3 sm:left-3 z-10 text-[11px] sm:text-sm px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full" style={{ marginTop: product.isDemo ? '18px' : 0 }}>
+        <div className="seal-badge absolute top-2 left-2 sm:top-3 sm:left-3 z-10 text-[11px] sm:text-sm px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full pointer-events-none" style={{ marginTop: product.isDemo ? '18px' : 0 }}>
           N&deg; {num}
         </div>
-        <div className="f-label absolute top-2 right-2 sm:top-3 sm:right-3 z-10 text-[8px] sm:text-[10px] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded"
+        <div className="f-label absolute top-2 right-2 sm:top-3 sm:right-3 z-10 text-[8px] sm:text-[10px] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded pointer-events-none"
              style={{ background: 'rgba(10,10,10,0.72)', color: 'var(--cream-dim)', letterSpacing: '0.12em', marginTop: product.isDemo ? '18px' : 0 }}>
           {product.category}
         </div>
         {(soldOut || lowStock) && (
-          <div className="f-label absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-10 text-[8px] sm:text-[10px] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full"
+          <div className="f-label absolute bottom-2 left-2 sm:bottom-3 sm:left-3 z-10 text-[8px] sm:text-[10px] px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full pointer-events-none"
                style={{
                  background: soldOut ? 'rgba(10,10,10,0.85)' : 'rgba(201,162,39,0.92)',
                  color: soldOut ? '#D9776F' : 'var(--pitch)',
@@ -61,19 +114,50 @@ export default function ProductCard({ product, index, selectedSize, onSelectSize
             {soldOut ? 'Sold Out' : `Only ${product.stock} left`}
           </div>
         )}
-        {!imgError && product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={`${product.club} ${product.category} kit`}
-            className="oxi-img w-full h-full object-cover"
-            onError={() => setImgError(true)}
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-2" style={{ color: 'var(--cream-dim)' }}>
-            <ImageOff size={28} strokeWidth={1.5} />
-            <span className="f-label text-[10px]">image unavailable</span>
-          </div>
+        {photos.length === 0 ? noPhoto : !many ? photoNode(photos[0], 0) : (
+          <>
+            <div
+              key={photosKey}
+              role="group"
+              aria-roledescription="carousel"
+              aria-label={`${kitName} photos`}
+              tabIndex={0}
+              onScroll={onStripScroll}
+              onPointerDown={() => setTouched(true)}
+              onTouchStart={() => setTouched(true)}
+              onMouseEnter={() => setTouched(true)}
+              onFocus={() => setTouched(true)}
+              className="oxi-strip absolute inset-0 flex overflow-x-auto snap-x snap-mandatory"
+            >
+              {photos.map((src, i) => (
+                <div
+                  key={`${src}-${i}`}
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`${i + 1} of ${photos.length}`}
+                  className="w-full h-full shrink-0 snap-start overflow-hidden"
+                >
+                  {i === 0 || touched ? photoNode(src, i) : null}
+                </div>
+              ))}
+            </div>
+            <div
+              data-dots
+              aria-hidden="true"
+              className="absolute bottom-2 right-2 sm:bottom-3 sm:right-3 z-10 flex items-center gap-1 rounded-full px-1.5 py-1 pointer-events-none"
+              style={{ background: 'rgba(10,10,10,0.55)' }}
+            >
+              {photos.map((src, i) => (
+                <span
+                  key={`${src}-${i}`}
+                  data-dot
+                  data-active={i === activePhoto ? 'true' : undefined}
+                  className="block rounded-full"
+                  style={{ width: 6, height: 6, background: i === activePhoto ? 'var(--gold-bright)' : 'rgba(245,241,230,0.5)' }}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

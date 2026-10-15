@@ -18,6 +18,7 @@ import AdminDrawer from '@/components/AdminDrawer';
 import CartDrawer from '@/components/CartDrawer';
 import PasscodeGate from '@/components/PasscodeGate';
 import SizeGuideModal from '@/components/SizeGuideModal';
+import PhotoLightbox from '@/components/PhotoLightbox';
 
 // Stock is tracked per kit, not per size, so caps count a kit's units across all of its sizes.
 const unitsInCart = (lines, productId) =>
@@ -30,6 +31,7 @@ export default function OriginXIShop() {
   const [filter, setFilter] = useState('All');
   const [selectedSizes, setSelectedSizes] = useState({});
   const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const [viewer, setViewer] = useState(null); // { photos, startIndex, title } while the photo viewer is open
 
   const [showPasscode, setShowPasscode] = useState(false);
   const [passcode, setPasscode] = useState(''); // held in memory only, never persisted
@@ -294,6 +296,7 @@ export default function OriginXIShop() {
                 onSelectSize={(id, size) => setSelectedSizes((s) => ({ ...s, [id]: size }))}
                 onAddToCart={handleAddToCart}
                 onOpenSizeGuide={() => setShowSizeGuide(true)}
+                onOpenPhotos={(photos, startIndex, title) => setViewer({ photos, startIndex, title })}
                 cartQty={unitsInCart(cart, p.id)}
               />
             ))}
@@ -367,6 +370,10 @@ export default function OriginXIShop() {
       )}
 
       {showSizeGuide && <SizeGuideModal onClose={() => setShowSizeGuide(false)} />}
+
+      {viewer && (
+        <PhotoLightbox photos={viewer.photos} startIndex={viewer.startIndex} title={viewer.title} onClose={() => setViewer(null)} />
+      )}
 
       {cartCount > 0 && !showCart && (
         <button
